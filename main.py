@@ -13,7 +13,8 @@ from networksecurity.entity.config_entity import (
 
 from networksecurity.exception.exception import NetworkSecurityException
 from networksecurity.logging.logger import logging
-
+from networksecurity.components.model_trainer import ModelTrainer
+from networksecurity.entity.config_entity import ModelTrainerConfig  
 
 if __name__ == "__main__":
     try:
@@ -87,6 +88,15 @@ if __name__ == "__main__":
         print(data_transformation_artifact)
 
         logging.info("Data Transformation Completed Successfully")
+
+        logging.info("Model Training Started")
+        model_trainer_config = ModelTrainerConfig(training_pipeline_config)  # ← FIXED
+        model_trainer = ModelTrainer(
+            model_trainer_config=model_trainer_config,
+            data_transformation_artifact=data_transformation_artifact
+        )
+        model_trainer_artifact = model_trainer.initiate_model_trainer()
+        logging.info("Model Training Artifact created.")
 
     except Exception as e:
         raise NetworkSecurityException(e, sys) from e
