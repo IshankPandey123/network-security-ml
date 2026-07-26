@@ -97,6 +97,28 @@ if __name__ == "__main__":
         )
         model_trainer_artifact = model_trainer.initiate_model_trainer()
         logging.info("Model Training Artifact created.")
+        
+        # print("\n" + "="*50)
+        # print("📊 MODEL PERFORMANCE METRICS")
+        # print("="*50)
+
+        # # Train metrics
+        # print("\n🔹 TRAIN SET:")
+        # print(f"   F1 Score:     {model_trainer_artifact.train_metric_artifact.f1_score:.4f}")
+        # print(f"   Precision:    {model_trainer_artifact.train_metric_artifact.precision_score:.4f}")
+        # print(f"   Recall:       {model_trainer_artifact.train_metric_artifact.recall_score:.4f}")
+
+        # # Test metrics
+        # print("\n🔹 TEST SET:")
+        # print(f"   F1 Score:     {model_trainer_artifact.test_metric_artifact.f1_score:.4f}")
+        # print(f"   Precision:    {model_trainer_artifact.test_metric_artifact.precision_score:.4f}")
+        # print(f"   Recall:       {model_trainer_artifact.test_metric_artifact.recall_score:.4f}")
+
+        # # Check if model meets expected accuracy
+        # if model_trainer_artifact.test_metric_artifact.f1_score >= 0.6:
+        #     print("\n✅ Model meets expected accuracy threshold (>= 0.6)")
+        # else:
+        #     print("\n⚠️ Model below expected accuracy threshold (< 0.6)")
 
     except Exception as e:
         raise NetworkSecurityException(e, sys) from e
