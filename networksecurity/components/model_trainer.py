@@ -16,11 +16,13 @@ from networksecurity.utils.ml_utils.metric.classification_metric import get_clas
 from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import (
+from sklearn.ensemble import ( 
     AdaBoostClassifier,
     GradientBoostingClassifier,
     RandomForestClassifier,
 )
+import dagshub
+dagshub.init(repo_owner='IshankPandey123', repo_name='network-security-ml', mlflow=True)
 
 
 class ModelTrainer:
@@ -31,16 +33,16 @@ class ModelTrainer:
         except Exception as e:
             raise NetworkSecurityException(e, sys)
 
-    def track_mlflow(self, best_model, classificationmetric):
+    def track_mlflow(self, best_model, classificationmetric, dataset_type="train"):
         with mlflow.start_run():
             f1_score = classificationmetric.f1_score
             precision_score = classificationmetric.precision_score
             recall_score = classificationmetric.recall_score
 
-            mlflow.log_metric("f1_score", f1_score)
-            mlflow.log_metric("precision_score", precision_score)
-            mlflow.log_metric("recall_score", recall_score)
-            mlflow.sklearn.log_model(best_model, "model")
+            mlflow.log_metric(f"{dataset_type}_f1_score", f1_score)
+            mlflow.log_metric(f"{dataset_type}_precision_score", precision_score)
+            mlflow.log_metric(f"{dataset_type}_recall_score", recall_score)
+            mlflow.sklearn.log_model(best_model, f"model_{dataset_type}")
 
     def train_model(self, X_train, y_train, X_test, y_test):
         try:
@@ -91,22 +93,23 @@ class ModelTrainer:
             ]
             best_model = models[best_model_name]
 
-            # Predictions and metrics
+            # Predictions and metrics - Training
             y_train_pred = best_model.predict(X_train)
             classification_train_metric = get_classification_score(
                 y_true=y_train, 
                 y_pred=y_train_pred
             )
 
-            # Track the experiments mlflow
-            self.track_mlflow(best_model, classification_train_metric)
+            # Track training metrics
+            self.track_mlflow(best_model, classification_train_metric, "train")
 
-            y_test_pred = best_model.predict(X_test)
+            # Predictions and metrics - Testing
+            y_test_pred = best_model.predict(X_test)    
             classification_test_metric = get_classification_score(
                 y_true=y_test, 
                 y_pred=y_test_pred
             )
-            self.track_mlflow(best_model, classification_test_metric)
+            self.track_mlflow(best_model, classification_test_metric, "test")
 
             # Load preprocessor and create final model
             preprocessor = load_object(
@@ -126,6 +129,8 @@ class ModelTrainer:
                 self.model_trainer_config.trained_model_file_path,
                 obj=network_model
             )
+
+            save_object("final_model/model.pkl", best_model)
 
             model_trainer_artifact = ModelTrainerArtifact(
                 trained_model_file_path=self.model_trainer_config.trained_model_file_path,

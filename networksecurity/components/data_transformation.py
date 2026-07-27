@@ -1,4 +1,4 @@
-import os
+import os  
 import sys
 import numpy as np
 import pandas as pd
@@ -160,6 +160,9 @@ class DataTransformation:
                 self.data_transformation_config.transformed_object_file_path,
                 preprocessing_obj,
             )
+
+            # FIXED: Use preprocessing_obj instead of preprocessor_object
+            save_object("final_model/preprocessor.pkl", preprocessing_obj)  # Also fixed file extension
 
             # Create artifact
             data_transformation_artifact = DataTransformationArtifact(
