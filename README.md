@@ -85,69 +85,6 @@ Artifacts/
         ├── train.csv
         └── test.csv
 
-### 2. ✅ Data Validation
-
-The **Data Validation** component ensures that the dataset is reliable, consistent, and suitable for machine learning model training.
-
-#### Responsibilities:
-
-- 🔍 Validates incoming data quality before model training.
-- 📋 Ensures dataset structure matches the expected schema.
-- 📊 Detects data distribution changes between training and incoming datasets.
-
----
-
-### Validation Steps
-
-#### 1. Schema Validation
-
-Checks whether the dataset follows the expected structure:
-
-- Number of columns
-- Column names
-- Data types
-- Required features availability
-
----
-
-#### 2. Numerical Column Validation
-
-Ensures that all required numerical features:
-
-- Exist in the dataset
-- Contain valid numerical values
-- Match expected data formats
-
----
-
-#### 3. Dataset Drift Detection
-
-Detects changes in data distribution using the:
-
-**Kolmogorov-Smirnov (KS) Test**
-
-The KS test compares the statistical distribution of training data and incoming data to identify significant changes that may impact model performance.
-
----
-
-### 📊 Data Validation Flow
-
-![alt text](image.png)
-
----
-
-### Generated Artifacts
-
-```text
-Artifacts/
-└── data_validation/
-    ├── validated/
-    │   ├── train.csv
-    │   └── test.csv
-    ├── invalid/
-    │   ├── train.csv
-    │   └── test.csv
-    └── drift_report.yaml
 ```
 ### 2. ✅ Data Validation
 
