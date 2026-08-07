@@ -2,38 +2,26 @@
 
 ## 📌 Overview
 
-**Network Security Threat Detection** is an end-to-end Machine Learning project designed to identify whether network traffic is **malicious or normal**.
+**Network Security Threat Detection** is an end-to-end Machine Learning project designed to identify whether network traffic or websites represent **malicious (phishing)** or **normal** activity.
 
 The project implements a **production-ready ML pipeline** following industry-standard MLOps practices:
 
-![alt text](image-1.png)
+![ML Pipeline Architecture](image-1.png)
 
 ---
 
 ## 🚀 Key Features
 
-This project follows modern **Machine Learning Engineering principles**:
+This project follows modern **Machine Learning Engineering & MLOps principles**:
 
-- 🏗️ **Modular Pipeline Architecture**  
-  Structured workflow for scalable ML development and deployment.
-
-- ✅ **Data Validation**  
-  Ensures data quality, consistency, and schema correctness before training.
-
-- 📊 **Dataset Drift Detection**  
-  Detects changes between training and incoming data distributions.
-
-- 🤖 **Automated Model Training**  
-  Complete pipeline for preprocessing, training, evaluation, and model saving.
-
-- 📈 **MLflow Experiment Tracking**  
-  Tracks experiments, metrics, parameters, and model versions.
-
-- ⚡ **FastAPI Deployment**  
-  Provides a lightweight REST API for real-time predictions.
-
-- 📦 **Batch Prediction Pipeline**  
-  Supports large-scale prediction on new network data.
+- 🏗️ **Modular Pipeline Architecture** — Structured components for Ingestion, Validation, Transformation, Model Training, and Evaluation.
+- 🔗 **Database Integration** — Automated extraction and ingestion from **MongoDB**.
+- ✅ **Data Quality & Schema Validation** — Structural checking against strict schema definitions (`schema.yaml`).
+- 📊 **Dataset Drift Detection** — Statistical distribution checking between training and incoming datasets using the **Kolmogorov-Smirnov (KS) Test**.
+- 🧹 **Data Transformation** — KNN Imputer pipeline for missing values and NumPy array exports.
+- 🤖 **Automated Model Selection & Tuning** — Hyperparameter grid search evaluating Random Forest, Decision Tree, Gradient Boosting, Logistic Regression, and AdaBoost.
+- 📈 **MLflow & DagsHub Experiment Tracking** — Remote logging of metrics (F1, Precision, Recall), parameters, and model artifacts.
+- ⚡ **FastAPI Web API** — REST API endpoints for triggerable retraining (`/train`) and interactive batch prediction (`/predict`) with HTML table visualization.
 
 ---
 
@@ -41,13 +29,12 @@ This project follows modern **Machine Learning Engineering principles**:
 
 | Category | Technologies |
 |----------|-------------|
-| Programming Language | Python |
-| Machine Learning | Scikit-learn |
-| API Framework | FastAPI |
-| Experiment Tracking | MLflow |
-| Database | MongoDB |
-| Deployment | Docker, AWS |
-| Data Processing | Pandas, NumPy |
+| **Programming Language** | Python 3.10+ |
+| **Machine Learning** | Scikit-learn, SciPy, NumPy, Pandas |
+| **API Framework** | FastAPI, Uvicorn, Jinja2 |
+| **Experiment Tracking** | MLflow, DagsHub |
+| **Database** | MongoDB Atlas / PyMongo |
+| **Deployment & Ops** | Docker, AWS |
 
 ---
 
@@ -55,89 +42,190 @@ This project follows modern **Machine Learning Engineering principles**:
 
 With the rapid increase in cyber threats and sophisticated attacks, detecting malicious network activity automatically has become a critical requirement for modern security systems.
 
-This project aims to build a **Machine Learning-based Network Security Threat Detection System** that analyzes network traffic patterns and classifies network connections into:
+This project analyzes network traffic and phishing feature vectors to classify connections into:
 
-- ✅ **Normal Traffic** — Legitimate network activity
-- 🚨 **Malicious Traffic** — Potentially harmful or suspicious activity
+- ✅ **Normal / Legitimate Traffic (`0`)**
+- 🚨 **Malicious / Phishing Traffic (`1`)**
 
-The goal is to develop an automated, scalable, and production-ready ML pipeline capable of identifying security threats efficiently.
+The system provides an automated, scalable pipeline that ingests data, validates quality, trains candidate models, logs metrics, and serves predictions via FastAPI.
 
-## 🚀 Features
+---
 
-### 1. 📥 Data Ingestion
+## 🧱 Pipeline Architecture & Components
 
-**Responsibilities:**
-
-The Data Ingestion component is responsible for collecting raw network security data and preparing it for the ML pipeline.
-
-- 🔗 Connects with **MongoDB database** to fetch raw phishing/network security data.
-- 📂 Extracts and stores raw data into the feature store.
-- 🔀 Splits the dataset into **training and testing datasets**.
-- 📦 Generates ingestion artifacts required for downstream pipeline components.
-
-**Output Structure:**
+### 1. 📥 Data Ingestion (`components/data_ingestion.py`)
+- Connects to **MongoDB** (`NETWORKAI` database, `NetworkData` collection).
+- Extracts raw network traffic records into pandas DataFrame format.
+- Saves the full raw dataset into the Feature Store.
+- Splits data into an **80/20 Train-Test split**.
 
 ```text
 Artifacts/
 └── data_ingestion/
     ├── feature_store/
+    │   └── phisingData.csv
     └── ingested/
         ├── train.csv
         └── test.csv
-
 ```
-### 2. ✅ Data Validation
-
-The **Data Validation** component ensures that the dataset is reliable, consistent, and suitable for machine learning model training.
-
-#### Responsibilities:
-
-- 🔍 Validates incoming data quality before model training
-- 📋 Ensures dataset structure matches the expected schema  
-- 📊 Detects data distribution changes between training and incoming datasets
 
 ---
 
-#### Validation Steps
+### 2. ✅ Data Validation (`components/data_validation.py`)
+- **Schema Validation**: Validates the total number of columns and verifies that all required numerical features exist according to `schema.yaml`.
+- **Dataset Drift Detection**: Uses two-sample Kolmogorov-Smirnov (KS) tests to check feature distribution drift between training and testing splits.
+- **Drift Report**: Exports a detailed `drift_report.yaml`.
 
-**1. Schema Validation**
-
-Checks whether the dataset follows the expected structure:
-- Number of columns
-- Column names
-- Data types
-- Required features availability
-
-**2. Numerical Column Validation**
-
-Ensures that all required numerical features:
-- Exist in the dataset
-- Contain valid numerical values
-- Match expected data formats
-
-**3. Dataset Drift Detection**
-
-Detects changes in data distribution using the **Kolmogorov-Smirnov (KS) Test**.
-
-The KS test compares the statistical distribution of training data and incoming data to identify significant changes that may impact model performance.
-
----
-
-#### 📊 Data Validation Flow
-
-![alt text](image-2.png)
-
----
-
-#### Generated Artifacts
+![Data Validation Flow](image-2.png)
 
 ```text
 Artifacts/
 └── data_validation/
-    ├── validated/
+    ├── valid_data/
     │   ├── train.csv
     │   └── test.csv
-    ├── invalid/
-    │   ├── train.csv
-    │   └── test.csv
+    ├── invalid_data/
     └── drift_report.yaml
+```
+
+---
+
+### 3. 🧹 Data Transformation (`components/data_transformation.py`)
+- Maps target labels (`-1` to `0` for legitimate, `1` for phishing).
+- Fits a Scikit-Learn `Pipeline` utilizing `KNNImputer` ($k=3$) to impute missing feature values.
+- Saves transformed train/test datasets as NumPy `.npy` arrays.
+- Exports the preprocessor pipeline object to `final_model/preprocessor.pkl`.
+
+```text
+Artifacts/
+└── data_transformation/
+    ├── transformed/
+    │   ├── train.npy
+    │   └── test.npy
+    └── transformed_object/
+        └── preprocessor.pkl
+```
+
+---
+
+### 4. 🤖 Model Training & Evaluation (`components/model_trainer.py`)
+- Evaluates multiple classification models:
+  - **Random Forest Classifier**
+  - **Decision Tree Classifier**
+  - **Gradient Boosting Classifier**
+  - **Logistic Regression**
+  - **AdaBoost Classifier**
+- Performs **GridSearchCV** hyperparameter tuning.
+- Selects the best performing model based on test evaluation metrics (F1 Score, Precision, Recall).
+- Encapsulates preprocessor and classifier inside a custom `NetworkModel` wrapper.
+- Exports the finalized pipeline model to `final_model/model.pkl`.
+
+---
+
+### 5. 📈 MLflow & DagsHub Experiment Tracking
+- Logs metrics (`train_f1_score`, `test_f1_score`, `precision`, `recall`) and trained model artifacts to **DagsHub**.
+- Enables remote experiment comparison and model versioning.
+
+---
+
+### 6. ⚡ API & Prediction Engine (`app.py`)
+- Built with **FastAPI** and **Uvicorn**.
+- Provides real-time prediction capabilities for incoming CSV batches.
+- Visualizes prediction results as an interactive HTML table.
+
+---
+
+## 📂 Project Structure
+
+```text
+ML_Project/
+├── .env                       # Environment variables (MongoDB connection URI)
+├── app.py                     # FastAPI web application entry point
+├── main.py                    # Local pipeline execution entry point
+├── push_data.py               # Data extraction & MongoDB insertion script
+├── requirements.txt           # Python dependencies
+├── setup.py                   # Package setup configuration
+├── Dockerfile                 # Containerization instructions
+├── Network_Data/              # Raw data directory (phisingData.csv)
+├── data_schema/               # Schema configuration (schema.yaml)
+├── final_model/               # Production model artifacts (model.pkl, preprocessor.pkl)
+├── templates/                 # HTML templates for FastAPI UI (table.html)
+└── networksecurity/           # Main source package
+    ├── cloud/                 # Cloud integration helpers
+    ├── components/            # Pipeline components (Ingestion, Validation, Transformation, Trainer)
+    ├── constant/              # Constants & schema paths
+    ├── entity/                # Data structures (Config & Artifact entities)
+    ├── exception/             # Custom exception handling
+    ├── logging/               # Logging configuration
+    ├── pipeline/              # Training pipeline coordinator
+    └── utils/                 # General & ML helper functions
+```
+
+---
+
+## ⚡ Quick Start & Usage
+
+### 1. Prerequisite Setup
+
+Clone the repository and set up a virtual environment:
+
+```bash
+git clone https://github.com/IshankPandey123/network-security-ml.git
+cd network-security-ml
+
+python -m venv venv
+source venv/bin/activate   # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Environment Configuration
+
+Create a `.env` file in the project root:
+
+```env
+MONGO_DB_URL="mongodb+srv://<username>:<password>@cluster.mongodb.net/?retryWrites=true&w=majority"
+```
+
+### 3. Data Ingestion to MongoDB
+
+Extract local CSV data and push it into MongoDB:
+
+```bash
+python push_data.py
+```
+
+### 4. Run the Training Pipeline
+
+Execute the full ML training pipeline locally:
+
+```bash
+python main.py
+```
+
+---
+
+## 🌐 Serving with FastAPI
+
+Launch the FastAPI web service:
+
+```bash
+python app.py
+```
+
+Or run via Uvicorn directly:
+
+```bash
+uvicorn app:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Available Endpoints
+
+* 📄 **`GET /`**: Redirects to interactive Swagger API documentation (`http://localhost:8000/docs`).
+* 🔄 **`GET /train`**: Triggers full pipeline re-training remotely.
+* 📤 **`POST /predict`**: Upload a test dataset CSV to receive threat predictions formatted as an HTML table.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the `LICENSE` file for details.
